@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class MovieLensProcessor {
-  public static final String GENRE_SPLIT = "\\|";
+  private static final String GENRE_SPLIT = "\\|";
   private static final String BASE_DATA_DIR = "src/main/resources/data/";
   private final Dataset<Row> moviesDS;
   private final Dataset<Row> ratingsDS;
@@ -32,7 +32,8 @@ class MovieLensProcessor {
             .groupBy("userID")
             .agg(
                 functions.count("rating").as("numRatings"),
-                functions.bround(functions.avg("rating"), 2).as("avgRating")).persist();
+                functions.bround(functions.avg("rating"), 2).as("avgRating"))
+            .persist();
 
     avgRatingPerUser
         .coalesce(1)
@@ -66,9 +67,10 @@ class MovieLensProcessor {
             .avg("rating")
             .orderBy(functions.desc("avg(rating)"))
             .limit(100)
-            .withColumn("avgRating", functions.bround(functions.col("avg(rating)"), 2))
+            .withColumn("avgRating", functions.bround(functions.col("avg(rating)"), 3))
             .drop("avg(rating)")
-            .withColumn("rank", over).persist();
+            .withColumn("rank", over)
+            .persist();
 
     ratedMovies.write().mode(SaveMode.Overwrite).parquet("build/output/movies-per-genre");
 
