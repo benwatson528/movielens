@@ -1,4 +1,4 @@
-package uk.co.hadoopathome.spark.movielens;
+package uk.co.hadoopathome.spark.movielens.data;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -6,19 +6,17 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
 
-class DataLoader {
+public class DataLoader {
   private final SparkSession sparkSession;
   private final String baseDataDir;
 
-  DataLoader(String baseDataDir, SparkSession sparkSession) {
+  public DataLoader(String baseDataDir, SparkSession sparkSession) {
     this.baseDataDir = baseDataDir;
     this.sparkSession = sparkSession;
   }
 
-  Dataset<Row> createRatingsDataset() {
+  public Dataset<Row> createRatingsDataset() {
     JavaRDD<String> stringJavaRDD =
         this.sparkSession.sparkContext().textFile(this.baseDataDir + "ratings.dat", 1).toJavaRDD();
     JavaRDD<Row> splitRowRDD =
@@ -33,17 +31,10 @@ class DataLoader {
                       Long.parseLong(split[3]));
                 });
 
-    StructType structType =
-        new StructType()
-            .add("userID", DataTypes.IntegerType)
-            .add("movieID", DataTypes.IntegerType)
-            .add("rating", DataTypes.IntegerType)
-            .add("timestamp", DataTypes.LongType);
-
-    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, structType);
+    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, Schemas.getRatingsSchema());
   }
 
-  Dataset<Row> createMoviesDataset() {
+  public Dataset<Row> createMoviesDataset() {
     JavaRDD<String> stringJavaRDD =
         this.sparkSession.sparkContext().textFile(this.baseDataDir + "movies.dat", 1).toJavaRDD();
     JavaRDD<Row> splitRowRDD =
@@ -54,16 +45,10 @@ class DataLoader {
                   return RowFactory.create(Integer.parseInt(split[0]), split[1], split[2]);
                 });
 
-    StructType structType =
-        new StructType()
-            .add("movieID", DataTypes.IntegerType)
-            .add("title", DataTypes.StringType)
-            .add("genre", DataTypes.StringType);
-
-    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, structType);
+    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, Schemas.getMoviesSchema());
   }
 
-  Dataset<Row> createUsersDataset() {
+  public Dataset<Row> createUsersDataset() {
     JavaRDD<String> stringJavaRDD =
         this.sparkSession.sparkContext().textFile(this.baseDataDir + "users.dat", 1).toJavaRDD();
     JavaRDD<Row> splitRowRDD =
@@ -79,14 +64,6 @@ class DataLoader {
                       split[4]);
                 });
 
-    StructType structType =
-        new StructType()
-            .add("userID", DataTypes.IntegerType)
-            .add("gender", DataTypes.StringType)
-            .add("age", DataTypes.IntegerType)
-            .add("occupation", DataTypes.IntegerType)
-            .add("zipCode", DataTypes.StringType);
-
-    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, structType);
+    return this.sparkSession.sqlContext().createDataFrame(splitRowRDD, Schemas.getUsersSchema());
   }
 }
