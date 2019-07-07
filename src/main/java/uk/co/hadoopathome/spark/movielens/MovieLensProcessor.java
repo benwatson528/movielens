@@ -62,15 +62,12 @@ class MovieLensProcessor {
     Dataset<Row> ratedMovies =
         this.moviesDS
             .join(this.ratingsDS, "movieID")
-            .groupBy("movieID")
+            .groupBy("movieID", "title")
             .avg("rating")
-            .join(this.moviesDS, "movieID")
-            .drop("genre")
-            .limit(100)
             .orderBy(functions.desc("avg(rating)"))
+            .limit(100)
             .withColumn("avgRating", functions.bround(functions.col("avg(rating)"), 2))
             .drop("avg(rating)")
-            .coalesce(1)
             .withColumn("rank", over).persist();
 
     ratedMovies.write().mode(SaveMode.Overwrite).parquet("build/output/movies-per-genre");
